@@ -1,1 +1,6 @@
+br\com\curso\rest\core\BaseTest.class
+br\com\curso\rest\core\Constantes.class
+br\com\curso\rest\tests\ApiTest.class
+br\sc\rest\UserJsonTest.class
+br\sc\rest\RunnerTestApi.class
 br\sc\rest\OlaMundo.class
