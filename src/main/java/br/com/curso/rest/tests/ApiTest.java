@@ -10,6 +10,10 @@ import org.junit.Test;
 import br.com.curso.rest.core.BaseTest;
 import io.restassured.RestAssured;
 
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+
 public class ApiTest extends BaseTest {
 
     private String TOKEN;
@@ -86,16 +90,7 @@ public class ApiTest extends BaseTest {
 
     @Test
     public void deveInserirMovimentacaoSucesso(){
-        Movimentacao movimentacao = new Movimentacao();
-        movimentacao.setConta_id(1762022);
-       // movimentacao.setUsuario_id();
-        movimentacao.setDescricao("Descricao da movimentacao");
-        movimentacao.setEnvolvido("Envolvido na movimentacao");
-        movimentacao.setTipo("REC");
-        movimentacao.setData_transacao("01/01/2000");
-        movimentacao.setData_pagamento("10/05/2010");
-        movimentacao.setValor(100f);
-        movimentacao.setStatus(true);
+        Movimentacao movimentacao = getMovimentacaoValida();
 
         RestAssured.given()
                    .header("Authorization", "JWT " + TOKEN) //bearer
@@ -107,5 +102,62 @@ public class ApiTest extends BaseTest {
 
         ;
 
+    }
+
+    @Test
+    public void deveValidarCamposObrigatoriosMovimentacao(){
+        RestAssured.given()
+                .header("Authorization", "JWT " + TOKEN) //bearer
+                .body("{}")
+                .when()
+                .post("/transacoes")
+                .then()
+                .statusCode(400)
+                .body("$", hasSize(8))
+                .body("msg", hasItems(
+                       "Data da Movimentação é obrigatório",
+                        "Data do pagamento é obrigatório",
+                        "Descrição é obrigatório",
+                        "Interessado é obrigatório",
+                        "Valor é obrigatório",
+                        "Valor deve ser um número",
+                        "Conta é obrigatório",
+                        "Situação é obrigatório"
+                ))
+
+        ;
+
+    }
+
+    @Test
+    public void naoDeveInserirMovimentacaoComDataFutura(){
+        Movimentacao movimentacao = getMovimentacaoValida();
+        movimentacao.setData_transacao("08/06/2023");
+        RestAssured.given()
+                .header("Authorization", "JWT " + TOKEN) //bearer
+                .body(movimentacao)
+                .when()
+                .post("/transacoes")
+                .then()
+                .statusCode(400)
+                .body("$", hasSize(1))
+                .body("msg", hasItem("Data da Movimentação deve ser menor ou igual à data atual"))
+
+        ;
+
+    }
+
+    private Movimentacao getMovimentacaoValida(){
+        Movimentacao movimentacao = new Movimentacao();
+        movimentacao.setConta_id(1762022);
+        // movimentacao.setUsuario_id();
+        movimentacao.setDescricao("Descricao da movimentacao");
+        movimentacao.setEnvolvido("Envolvido na movimentacao");
+        movimentacao.setTipo("REC");
+        movimentacao.setData_transacao("01/01/2000");
+        movimentacao.setData_pagamento("10/05/2010");
+        movimentacao.setValor(100f);
+        movimentacao.setStatus(true);
+        return movimentacao;
     }
 }
